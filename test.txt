@@ -1,0 +1,14 @@
+A M
+B F
+C M
+D M
+E F
+F M
+
+A -> C
+B -> C
+C -> D
+C -> F
+E -> A
+
+A <-> B
