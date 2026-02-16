@@ -48,7 +48,8 @@ rules = [
     (o m, "son"),
     (o a . o m, "grandson"),
     (i f, "mom"),
-    (d f, "wife")
+    (d f, "wife"),
+    (i a . i a . o m, "uncle")
     ]
 
 -- | Main parsing function.
