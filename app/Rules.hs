@@ -1,48 +1,50 @@
+{-# OPTIONS_GHC -Wno-missing-signatures #-}
 module Rules where
 
 import Types
 
-getMales :: [Vertex] -> [Vertex]
-getMales = filter (\v -> gender v == Male)
+import Control.Monad.State (State, get, modify)
+import qualified Data.HashSet as HS
+import Control.Monad ((>=>))
 
-getFemales :: [Vertex] -> [Vertex]
-getFemales = filter (\v -> gender v == Female)
+type Visited = HS.HashSet String
 
-getAny :: [Vertex] -> [Vertex]
-getAny = id
+getMales :: [Vertex] -> State Visited [Vertex]
+getMales vertices = do
+  visited <- get
+  modify (\s -> foldl (flip HS.insert) s (map name vertices))
+  return $ filter (\v -> notElem (name v) visited && (gender v == Male)) vertices
 
-getIns :: ([Vertex] -> [Vertex]) -> [Vertex] -> [Vertex]
+getFemales :: [Vertex] -> State Visited [Vertex]
+getFemales vertices = do
+  visited <- get
+  modify (\s -> foldl (flip HS.insert) s (map name vertices))
+  return $ filter (\v -> notElem (name v) visited && (gender v == Female)) vertices
+
+getAny :: [Vertex] -> State Visited [Vertex]
+getAny = return
+
+getIns :: ([Vertex] -> State Visited [Vertex]) -> [Vertex] -> State Visited [Vertex]
 getIns genderGetter vertices = genderGetter (concatMap inc vertices)
 
-getOut :: ([Vertex] -> [Vertex]) -> [Vertex] -> [Vertex]
+getOut :: ([Vertex] -> State Visited [Vertex]) -> [Vertex] -> State Visited [Vertex]
 getOut genderGetter vertices = genderGetter (concatMap out vertices)
 
-getDual :: ([Vertex] -> [Vertex]) -> [Vertex] -> [Vertex]
+getDual :: ([Vertex] -> State Visited [Vertex]) -> [Vertex] -> State Visited [Vertex]
 getDual genderGetter vertices = genderGetter (concatMap dual vertices)
 
-m :: [Vertex] -> [Vertex]
 m = getMales
-
-f :: [Vertex] -> [Vertex]
 f = getFemales
-
-a :: [Vertex] -> [Vertex]
 a = getAny
-
-i :: ([Vertex] -> [Vertex]) -> [Vertex] -> [Vertex]
 i = getIns
-
-o :: ([Vertex] -> [Vertex]) -> [Vertex] -> [Vertex]
 o = getOut
-
-d :: ([Vertex] -> [Vertex]) -> [Vertex] -> [Vertex]
 d = getDual
 
-rules :: [([Vertex] -> [Vertex], String)]
+rules :: [([Vertex] -> State Visited [Vertex], String)]
 rules =
   [ (o m, "son"),
-    (o a . o m, "grandson"),
+    (o a >=> o m, "grandson"),
     (i f, "mom"),
     (d f, "wife"),
-    (i a . i a . o m, "uncle")
+    (i a >=> i a >=> o m, "uncle")
   ]

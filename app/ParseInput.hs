@@ -6,7 +6,6 @@ import Types
 parseInput :: String -> [Vertex]
 parseInput input =
   let ls = lines input
-      -- Split into three sections separated by blank lines.
       (sec1, rest1) = break null ls
       rest1' = dropWhile null rest1
       (sec2, rest2) = break null rest1'
@@ -57,9 +56,9 @@ buildGraph genderPairs parentChildPairs marriagePairs =
         Map.fromList
           [ ( name_,
               Vertex
-                { inc = map (vertexMap Map.!) (Map.findWithDefault [] name_ parentMap),
-                  out = map (vertexMap Map.!) (Map.findWithDefault [] name_ childMap),
-                  dual = map (vertexMap Map.!) (Map.findWithDefault [] name_ spouseMap),
+                { inc = map (vertexMap Map.!) (findOrGetEmpty name_ parentMap),
+                  out = map (vertexMap Map.!) (findOrGetEmpty name_ childMap),
+                  dual = map (vertexMap Map.!) (findOrGetEmpty name_ spouseMap),
                   name = name_,
                   gender = genderMap Map.! name_
                 }
@@ -68,6 +67,8 @@ buildGraph genderPairs parentChildPairs marriagePairs =
           ]
    in Map.elems vertexMap
   where
+    findOrGetEmpty = Map.findWithDefault []
+
     addParentChild (pMap, cMap) (p, c) =
       ( Map.insertWith (++) c [p] pMap,
         Map.insertWith (++) p [c] cMap
