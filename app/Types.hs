@@ -1,4 +1,5 @@
 module Types where
+import Data.Hashable (Hashable(..))
 
 data Gender = Male | Female | Any deriving (Eq, Show)
 
@@ -10,6 +11,12 @@ data Vertex
     name :: String,
     gender :: Gender
   }
+
+instance Eq Vertex where
+  (==) lhs rhs = name lhs == name rhs
+
+instance Hashable Vertex where
+  hashWithSalt salt v = hashWithSalt salt (name v)
 
 instance Show Vertex where
   show (Vertex inc_ out_ dual_ name_ gender_) =

@@ -4,11 +4,22 @@ C M
 D M
 E F
 F M
+H F
+I F
+ExWife F
+CoParentChild M
 
 A -> C
 B -> C
+E -> A
 C -> D
 C -> F
-E -> A
+C -> H
+I -> H
+I -> D
+I -> F
+C -> CoParentChild
+ExWife -> CoParentChild
 
 A <-> B
+C <-> I

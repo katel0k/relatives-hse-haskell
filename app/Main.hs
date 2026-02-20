@@ -35,6 +35,6 @@ main = do
         entry = filter (\v -> name v == entryName) graph
         outputFunc = if debug then show else name
     forM_ rules $ \(rule, role) -> do
-      let result = evalState (rule entry) HS.empty
+      let result = evalState (rule entry) (HS.singleton $ head entry)
       forM_ result $ \v -> do
         putStrLn $ outputFunc v ++ " " ++ role
