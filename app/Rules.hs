@@ -13,29 +13,26 @@ type Visited = HS.HashSet Vertex
 unique :: (Hashable a) => [a] -> [a]
 unique = HS.toList . HS.fromList
 
-getMales :: [Vertex] -> State Visited [Vertex]
-getMales vertices = do
+filterByPredicate :: (Vertex -> Bool) -> [Vertex] -> State Visited [Vertex]
+filterByPredicate vertexPred vertices = do
   visited <- get
   modify (\s -> foldl (flip HS.insert) s vertices)
-  return $ unique $ filter (\v -> notElem v visited && (gender v == Male)) vertices
+  return $ unique $ filter (\v -> notElem v visited && vertexPred v) vertices
+
+getMales :: [Vertex] -> State Visited [Vertex]
+getMales = filterByPredicate (\v -> gender v == Male)
 
 getFemales :: [Vertex] -> State Visited [Vertex]
-getFemales vertices = do
-  visited <- get
-  modify (\s -> foldl (flip HS.insert) s vertices)
-  return $ unique $ filter (\v -> notElem v visited && (gender v == Female)) vertices
+getFemales = filterByPredicate (\v -> gender v == Female)
 
 getAny :: [Vertex] -> State Visited [Vertex]
-getAny vertices = do
-  visited <- get
-  modify (\s -> foldl (flip HS.insert) s vertices)
-  return $ unique $ filter (`notElem` visited) vertices
+getAny = filterByPredicate (const True)
 
 getIns :: ([Vertex] -> State Visited [Vertex]) -> [Vertex] -> State Visited [Vertex]
-getIns genderGetter vertices = genderGetter (unique $ concatMap inc vertices)
+getIns genderGetter vertices = genderGetter (unique $ concatMap incoming vertices)
 
 getOut :: ([Vertex] -> State Visited [Vertex]) -> [Vertex] -> State Visited [Vertex]
-getOut genderGetter vertices = genderGetter (unique $ concatMap out vertices)
+getOut genderGetter vertices = genderGetter (unique $ concatMap outgoing vertices)
 
 getDual :: ([Vertex] -> State Visited [Vertex]) -> [Vertex] -> State Visited [Vertex]
 getDual genderGetter vertices = genderGetter (unique $ concatMap dual vertices)

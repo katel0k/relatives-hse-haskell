@@ -3,7 +3,7 @@ module ParseInput where
 import qualified Data.Map.Strict as Map
 import Types
 
-parseInput :: String -> [Vertex]
+parseInput :: String -> Either ErrorMsg [Vertex]
 parseInput input =
   let ls = lines input
       (sec1, rest1) = break null ls
@@ -11,40 +11,40 @@ parseInput input =
       (sec2, rest2) = break null rest1'
       rest2' = dropWhile null rest2
       (sec3, _) = break null rest2'
+   in do
+        genderPairs <- _parseGender sec1
+        parentChildPairs <- _parseParentChild sec2
+        marriagePairs <- _parseMarriage sec3
+        return $ _buildGraph genderPairs parentChildPairs marriagePairs
 
-      genderPairs = _parseGender sec1
-      parentChildPairs = _parseParentChild sec2
-      marriagePairs = _parseMarriage sec3
-   in buildGraph genderPairs parentChildPairs marriagePairs
-
-_parseGender :: [String] -> [(String, Gender)]
-_parseGender = map parseLine
+_parseGender :: [String] -> Either ErrorMsg [(String, Gender)]
+_parseGender = traverse parseLine . zip ([1 ..] :: [Int])
   where
-    parseLine line = case words line of
-      [name_, "M"] -> (name_, Male)
-      [name_, "F"] -> (name_, Female)
-      _ -> error ("Invalid gender line: " ++ line)
+    parseLine (n, line) = case words line of
+      [name_, "M"] -> Right (name_, Male)
+      [name_, "F"] -> Right (name_, Female)
+      _ -> Left (ErrorMsg ("Line " ++ show n ++ ": invalid gender line: " ++ line))
 
-_parseParentChild :: [String] -> [(String, String)]
-_parseParentChild = map parseLine
+_parseParentChild :: [String] -> Either ErrorMsg [(String, String)]
+_parseParentChild = traverse parseLine . zip ([1 ..] :: [Int])
   where
-    parseLine line = case words line of
-      [p, "->", c] -> (p, c)
-      _ -> error ("Invalid parent-child line: " ++ line)
+    parseLine (n, line) = case words line of
+      [p, "->", c] -> Right (p, c)
+      _ -> Left (ErrorMsg ("Line " ++ show n ++ ": invalid parent-child line: " ++ line))
 
-_parseMarriage :: [String] -> [(String, String)]
-_parseMarriage = map parseLine
+_parseMarriage :: [String] -> Either ErrorMsg [(String, String)]
+_parseMarriage = traverse parseLine . zip ([1 ..] :: [Int])
   where
-    parseLine line = case words line of
-      [a, "<->", b] -> (a, b)
-      _ -> error ("Invalid marriage line: " ++ line)
+    parseLine (n, line) = case words line of
+      [a, "<->", b] -> Right (a, b)
+      _ -> Left (ErrorMsg ("Line " ++ show n ++ ": invalid marriage line: " ++ line))
 
-buildGraph ::
+_buildGraph ::
   [(String, Gender)] -> -- names to genders mapping
   [(String, String)] -> -- parent ->  child edges
   [(String, String)] -> -- spouse <-> spouse edges
   [Vertex]
-buildGraph genderPairs parentChildPairs marriagePairs =
+_buildGraph genderPairs parentChildPairs marriagePairs =
   let genderMap = Map.fromList genderPairs
       allNames = Map.keys genderMap
 
@@ -52,12 +52,13 @@ buildGraph genderPairs parentChildPairs marriagePairs =
 
       spouseMap = foldl addMarriage Map.empty marriagePairs
 
+      -- works due to laziness
       vertexMap =
         Map.fromList
           [ ( name_,
               Vertex
-                { inc = map (vertexMap Map.!) (findOrGetEmpty name_ parentMap),
-                  out = map (vertexMap Map.!) (findOrGetEmpty name_ childMap),
+                { incoming = map (vertexMap Map.!) (findOrGetEmpty name_ parentMap),
+                  outgoing = map (vertexMap Map.!) (findOrGetEmpty name_ childMap),
                   dual = map (vertexMap Map.!) (findOrGetEmpty name_ spouseMap),
                   name = name_,
                   gender = genderMap Map.! name_

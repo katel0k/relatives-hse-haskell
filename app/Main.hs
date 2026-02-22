@@ -4,6 +4,7 @@ import qualified Data.HashSet as HS
 import Options.Applicative
 import ParseInput
 import Rules
+import System.Exit (exitFailure)
 import Types
 
 data Options = Options
@@ -29,12 +30,17 @@ main = do
   let filename = optFilename opts
       entryName = optEntry opts
       debug = optDebug opts
-  do
-    content <- readFile filename
-    let graph = parseInput content
-        entry = filter (\v -> name v == entryName) graph
-        outputFunc = if debug then show else name
-    forM_ rules $ \(rule, role) -> do
-      let result = evalState (rule entry) (HS.singleton $ head entry)
-      forM_ result $ \v -> do
-        putStrLn $ outputFunc v ++ " " ++ role
+  content <- readFile filename
+  graph <-
+    case parseInput content of
+      Left err -> putStrLn (errorMessage err) >> exitFailure
+      Right g -> return g
+  let entry = filter (\v -> name v == entryName) graph
+      outputFunc = if debug then show else name
+  case entry of
+    [] -> putStrLn ("Entry not found: " ++ entryName) >> exitFailure
+    (e : _) ->
+      forM_ rules $ \(rule, role) -> do
+        let result = evalState (rule entry) (HS.singleton e)
+        forM_ result $ \v ->
+          putStrLn $ outputFunc v ++ " " ++ role
