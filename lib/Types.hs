@@ -29,7 +29,7 @@ instance Show Vertex where
         show $ map name dual_
       ]
 
-newtype ErrorMsg = ErrorMsg String
+newtype ErrorMsg = ErrorMsg String deriving (Eq)
 
 errorMessage :: ErrorMsg -> String
 errorMessage (ErrorMsg s) = s
