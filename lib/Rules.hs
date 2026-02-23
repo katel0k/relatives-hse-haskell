@@ -9,6 +9,7 @@ module Rules
     mergeRules,
     makeRule,
     resolveRulesMap,
+    withoutTechnicalRules,
     getMales,
     getFemales,
     getAny,
@@ -93,6 +94,9 @@ resolveRulesMap rulesMap =
           Right r -> Right (r, name)
     )
     (HashMap.toList rulesMap)
+
+withoutTechnicalRules :: [String] -> ResolvedRulesMap -> ResolvedRulesMap
+withoutTechnicalRules technicalNames = filter (\(_, name) -> name `notElem` technicalNames)
 
 unique :: (Hashable a) => [a] -> [a]
 unique = HS.toList . HS.fromList

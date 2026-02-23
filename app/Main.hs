@@ -2,8 +2,9 @@ import Control.Monad (forM_)
 import GHC.IO.Encoding (utf8)
 import Options.Applicative
 import ParseInput
-import Rules (resolveRulesMap)
+import Rules (resolveRulesMap, withoutTechnicalRules)
 import RulesList (rules)
+import RuleUtils (technicalRuleNames)
 import Run
 import System.Exit (exitFailure)
 import System.IO (Handle, IOMode (ReadMode), hGetContents, hSetEncoding, stdin, withFile)
@@ -53,7 +54,8 @@ main = do
     case resolveRulesMap rules of
       Left err -> putStrLn (errorMessage err) >> exitFailure
       Right r -> return r
-  let pairs = getRelatives resolvedRules entryVertex
+  let resolvedForUser = withoutTechnicalRules technicalRuleNames resolvedRules
+      pairs = getRelatives resolvedForUser entryVertex
       outputLine v role = putStrLn (name v ++ " " ++ role)
       outputLineDebug v role = print (name v, role)
   if debug

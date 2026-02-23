@@ -5,14 +5,8 @@ where
 
 import CommonRules (commonRules)
 import qualified Data.HashMap.Strict as HashMap
-import RuleUtils (a, d, f, i, m, o, c, s)
+import RuleUtils (technicalRules, a, d, f, i, m, o, c, s)
 import Rules (RulesMap, (|:), mergeRules, (<==))
-
-technicalRules :: RulesMap
-technicalRules =
-  HashMap.fromList
-    [ "прародитель" |: i a <== i a
-    ]
 
 deeperRules :: RulesMap
 deeperRules =

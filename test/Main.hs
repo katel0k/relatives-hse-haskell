@@ -4,8 +4,8 @@ import Data.List (isInfixOf)
 import qualified Data.HashMap.Strict as HashMap
 import qualified Data.Map.Strict as Map
 import ParseInput
-import RuleUtils (a, f, i, m)
-import Rules (mergeRules, resolveRulesMap, (|:), (<==), RuleExpr)
+import RuleUtils (a, f, i, m, technicalRuleNames)
+import Rules (mergeRules, resolveRulesMap, withoutTechnicalRules, (|:), (<==), RuleExpr)
 import Run
 import Test.Tasty
 import Test.Tasty.HUnit
@@ -20,7 +20,8 @@ tests =
     "All"
     [ testGroup "parsing input" parsingTests,
       testGroup "rules evaluation" rulesTests,
-      testGroup "mergeRules" mergeRulesTests
+      testGroup "mergeRules" mergeRulesTests,
+      testGroup "technical rules not exposed" technicalRulesTests
     ]
 
 parsingTests :: [TestTree]
@@ -103,7 +104,36 @@ rulesTests =
       assertCompositeRulePrababushka
   ]
 
--- | Minimal rule map: прародитель = parent of parent, прадедушка = прародитель + male, прабабушка = прародитель + female.
+technicalRulesTests :: [TestTree]
+technicalRulesTests =
+  [ testCase "withoutTechnicalRules removes technical rule names from resolved map" $
+      case resolveRulesMap compositeRulesMap of
+        Left e -> assertFailure ("resolve failed: " ++ errorMessage e)
+        Right resolved -> do
+          let filtered = withoutTechnicalRules technicalRuleNames resolved
+          length filtered @?= 2
+          let names = map snd filtered
+          assertBool "прародитель not in filtered" ("прародитель" `notElem` names)
+          assertBool "прадедушка in filtered" ("прадедушка" `elem` names)
+          assertBool "прабабушка in filtered" ("прабабушка" `elem` names),
+    testCase "getRelatives with filtered map never returns technical role прародитель" $ do
+      case parseInput inputGraphFourGens of
+        Left e -> assertFailure ("parse failed: " ++ errorMessage e)
+        Right graph -> do
+          case resolveRulesMap compositeRulesMap of
+            Left err -> assertFailure ("resolve failed: " ++ errorMessage err)
+            Right resolved -> do
+              let filtered = withoutTechnicalRules technicalRuleNames resolved
+                  eve = head $ filter ((== "Eve") . name) graph
+                  pairs = getRelatives filtered eve
+                  roles = map snd pairs
+              assertBool "прародитель never appears as a role" ("прародитель" `notElem` roles)
+              assertBool "прадедушка appears for GreatGrandpa" $
+                any (\(v, r) -> name v == "GreatGrandpa" && r == "прадедушка") pairs
+              assertBool "прабабушка appears for GreatGrandma" $
+                any (\(v, r) -> name v == "GreatGrandma" && r == "прабабушка") pairs
+  ]
+
 compositeRulesMap :: HashMap.HashMap String RuleExpr
 compositeRulesMap =
   HashMap.fromList
