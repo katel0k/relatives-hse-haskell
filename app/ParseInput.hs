@@ -52,24 +52,27 @@ _buildGraph genderPairs parentChildPairs marriagePairs =
 
       spouseMap = foldl addMarriage Map.empty marriagePairs
 
-      -- works due to laziness
       vertexMap =
         Map.fromList
-          [ ( name_,
-              Vertex
-                { incoming = map (vertexMap Map.!) (findOrGetEmpty name_ parentMap),
-                  outgoing = map (vertexMap Map.!) (findOrGetEmpty name_ childMap),
-                  dual = map (vertexMap Map.!) (findOrGetEmpty name_ spouseMap),
-                  name = name_,
-                  gender = genderMap Map.! name_
-                }
-            )
+          [ (name_, vertexWithEdges name_ vertexMap)
             | name_ <- allNames
           ]
+
+      vertexWithEdges name_ vm =
+        let findEntryByName = Map.findWithDefault [] name_
+            parentNames = findEntryByName parentMap
+            childNames = findEntryByName childMap
+            spouseNames = findEntryByName spouseMap
+            getVertexByName = (vm Map.!)
+         in Vertex
+              { incoming = map getVertexByName parentNames,
+                outgoing = map getVertexByName childNames,
+                dual = map getVertexByName spouseNames,
+                name = name_,
+                gender = genderMap Map.! name_
+              }
    in Map.elems vertexMap
   where
-    findOrGetEmpty = Map.findWithDefault []
-
     addParentChild (pMap, cMap) (p, c) =
       ( Map.insertWith (++) c [p] pMap,
         Map.insertWith (++) p [c] cMap
