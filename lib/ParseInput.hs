@@ -1,11 +1,19 @@
 module ParseInput where
 
+import Data.Char (isSpace)
 import qualified Data.Map.Strict as Map
 import Types
 
+dropCommentLines :: [String] -> [String]
+dropCommentLines = filter (not . isComment)
+  where
+    isComment line = case dropWhile isSpace line of
+      ('#' : _) -> True
+      _ -> False
+
 parseInput :: String -> Either ErrorMsg [Vertex]
 parseInput input =
-  let ls = lines input
+  let ls = dropCommentLines (lines input)
       (sec1, rest1) = break null ls
       rest1' = dropWhile null rest1
       (sec2, rest2) = break null rest1'
@@ -13,17 +21,21 @@ parseInput input =
       (sec3, _) = break null rest2'
    in do
         genderPairs <- _parseGender sec1
-        parentChildPairs <- _parseParentChild sec2
-        marriagePairs <- _parseMarriage sec3
+        marriagePairs <- _parseMarriage sec2
+        parentChildPairs <- _parseParentChild sec3
         return $ _buildGraph genderPairs parentChildPairs marriagePairs
 
 _parseGender :: [String] -> Either ErrorMsg [(String, Gender)]
 _parseGender = traverse parseLine . zip ([1 ..] :: [Int])
   where
-    parseLine (n, line) = case words line of
-      [name_, "M"] -> Right (name_, Male)
-      [name_, "F"] -> Right (name_, Female)
-      _ -> Left (ErrorMsg ("Line " ++ show n ++ ": invalid gender line: " ++ line))
+    parseLine (n, line) =
+      let ws = words line
+       in if length ws >= 2
+            then case last ws of
+              "(М)" -> Right (unwords (init ws), Male)
+              "(Ж)" -> Right (unwords (init ws), Female)
+              _ -> Left (ErrorMsg ("Line " ++ show n ++ ": invalid gender line (expected (М) or (Ж)): " ++ line))
+            else Left (ErrorMsg ("Line " ++ show n ++ ": invalid gender line: " ++ line))
 
 _parseParentChild :: [String] -> Either ErrorMsg [(String, String)]
 _parseParentChild = traverse parseLine . zip ([1 ..] :: [Int])

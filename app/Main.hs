@@ -1,10 +1,12 @@
 import Control.Monad (forM_)
 import Control.Monad.State (evalState)
 import qualified Data.HashSet as HS
+import GHC.IO.Encoding (utf8)
 import Options.Applicative
 import ParseInput
 import Rules
 import System.Exit (exitFailure)
+import System.IO (IOMode (ReadMode), hGetContents, hSetEncoding, withFile)
 import Types
 
 data Options = Options
@@ -30,7 +32,9 @@ main = do
   let filename = optFilename opts
       entryName = optEntry opts
       debug = optDebug opts
-  content <- readFile filename
+  content <- withFile filename ReadMode $ \h -> do
+    hSetEncoding h utf8
+    hGetContents h
   graph <-
     case parseInput content of
       Left err -> putStrLn (errorMessage err) >> exitFailure
