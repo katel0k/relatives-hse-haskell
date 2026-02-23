@@ -1,5 +1,6 @@
 module Rules
   ( Rule (..),
+    RulesMap,
     evaluateRule,
     mergeRules,
     getMales,
@@ -13,6 +14,7 @@ where
 
 import Control.Monad ((>=>))
 import Control.Monad.State (State, evalState, get, modify)
+import qualified Data.HashMap.Strict as HashMap
 import qualified Data.HashSet as HS
 import Data.Hashable (Hashable)
 import Types
@@ -21,11 +23,13 @@ type Visited = HS.HashSet Vertex
 
 newtype Rule = Rule ([Vertex] -> State Visited [Vertex])
 
+type RulesMap = HashMap.HashMap String Rule
+
 evaluateRule :: Rule -> Vertex -> [Vertex]
 evaluateRule (Rule f) v = evalState (f [v]) (HS.singleton v)
 
-mergeRules :: [(Rule, String)] -> [(Rule, String)] -> [(Rule, String)]
-mergeRules a b = a ++ b
+mergeRules :: RulesMap -> RulesMap -> RulesMap
+mergeRules a b = a `HashMap.union` b
 
 unique :: (Hashable a) => [a] -> [a]
 unique = HS.toList . HS.fromList

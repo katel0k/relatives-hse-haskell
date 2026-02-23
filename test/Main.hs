@@ -1,5 +1,6 @@
 import CommonRules (commonRules)
 import Data.Char (toLower)
+import qualified Data.HashMap.Strict as HashMap
 import qualified Data.Map.Strict as Map
 import ParseInput
 import Rules (mergeRules)
@@ -87,21 +88,24 @@ rulesTests =
 
 mergeRulesTests :: [TestTree]
 mergeRulesTests =
-  [ testCase "mergeRules [] bs has same length as bs" $
-      length (mergeRules [] commonRules) @?= length commonRules,
-    testCase "mergeRules as [] has same length as as" $
-      length (mergeRules commonRules []) @?= length commonRules,
-    testCase "mergeRules as bs has length length as + length bs" $ do
-      let as = take 5 commonRules
-          bs = drop 5 commonRules
-      length (mergeRules as bs) @?= length as + length bs,
-    testCase "mergeRules preserves order: first list then second (by role labels)" $ do
-      let as = take 2 commonRules
-          bs = take 2 $ drop 2 commonRules
+  [ testCase "mergeRules empty bs has same size as bs" $
+      HashMap.size (mergeRules HashMap.empty commonRules) @?= HashMap.size commonRules,
+    testCase "mergeRules as empty has same size as as" $
+      HashMap.size (mergeRules commonRules HashMap.empty) @?= HashMap.size commonRules,
+    testCase "mergeRules as bs has size size as + size bs when disjoint" $ do
+      let entries = HashMap.toList commonRules
+          as = HashMap.fromList (take 5 entries)
+          bs = HashMap.fromList (drop 5 entries)
+      HashMap.size (mergeRules as bs) @?= HashMap.size as + HashMap.size bs,
+    testCase "mergeRules: result contains all keys from both maps" $ do
+      let as = HashMap.fromList (take 2 (HashMap.toList commonRules))
+          bs = HashMap.fromList (take 2 (drop 2 (HashMap.toList commonRules)))
           merged = mergeRules as bs
-      length merged @?= 4
-      map snd (take 2 merged) @?= map snd as
-      map snd (drop 2 merged) @?= map snd bs
+      HashMap.size merged @?= 4
+      assertBool "keys from first map present" $
+        all (`HashMap.member` merged) (HashMap.keys as)
+      assertBool "keys from second map present" $
+        all (`HashMap.member` merged) (HashMap.keys bs)
   ]
 
 assertParsedRulesGraph :: String -> (Graph -> Assertion) -> Assertion

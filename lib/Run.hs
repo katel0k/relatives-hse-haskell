@@ -1,11 +1,12 @@
 module Run where
 
-import Rules (Rule, evaluateRule)
+import qualified Data.HashMap.Strict as HashMap
+import Rules (RulesMap, evaluateRule)
 import Types (Vertex)
 
-getRelatives :: [(Rule, String)] -> Vertex -> [(Vertex, String)]
-getRelatives ruleList entry =
+getRelatives :: RulesMap -> Vertex -> [(Vertex, String)]
+getRelatives rulesMap entry =
   [ (v, role)
-    | (rule, role) <- ruleList,
+    | (role, rule) <- HashMap.toList rulesMap,
       v <- evaluateRule rule entry
   ]
