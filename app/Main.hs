@@ -1,13 +1,12 @@
 import Control.Monad (forM_)
-import qualified Data.Map.Strict as Map
 import GHC.IO.Encoding (utf8)
 import Options.Applicative
 import ParseInput
-import Run
 import Rules (rules)
+import Run
 import System.Exit (exitFailure)
 import System.IO (Handle, IOMode (ReadMode), hGetContents, hSetEncoding, stdin, withFile)
-import Types
+import Types (errorMessage, name)
 
 data Options = Options
   { optEntry :: String,
@@ -45,12 +44,13 @@ main = do
     case parseInput content of
       Left err -> putStrLn (errorMessage err) >> exitFailure
       Right g -> return g
-  vertexToRoles <-
-    case getRelatives rules graph entryName of
-      Left err -> putStrLn err >> exitFailure
-      Right m -> return m
-  let outputLine v role = putStrLn (name v ++ " " ++ role)
-      outputLineDebug v roles = forM_ roles $ \role -> print (name v, role)
+  entryVertex <-
+    case filter ((== entryName) . name) graph of
+      [] -> putStrLn ("Entry not found: " ++ entryName) >> exitFailure
+      (v : _) -> return v
+  let pairs = getRelatives rules entryVertex
+      outputLine v role = putStrLn (name v ++ " " ++ role)
+      outputLineDebug v role = print (name v, role)
   if debug
-    then forM_ (Map.toList vertexToRoles) $ uncurry outputLineDebug
-    else forM_ (Map.toList vertexToRoles) $ uncurry outputLine
+    then forM_ pairs $ uncurry outputLineDebug
+    else forM_ pairs $ uncurry outputLine

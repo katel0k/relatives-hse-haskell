@@ -1,12 +1,11 @@
 import Data.Char (toLower)
-import Data.List (sort)
 import qualified Data.Map.Strict as Map
 import ParseInput
-import Run
 import Rules (rules)
+import Run
 import Test.Tasty
 import Test.Tasty.HUnit
-import Types (Gender (..), Graph, name, gender, errorMessage)
+import Types (Gender (..), Graph, errorMessage, gender, name)
 
 main :: IO ()
 main = defaultMain tests
@@ -79,7 +78,8 @@ rulesTests :: [TestTree]
 rulesTests =
   [ testCase "rules test input parses to expected graph" $
       assertParsedRulesGraph inputGraphEve expectedRulesGraphShape,
-    testCase "Eve's relatives match expected name->roles map"
+    testCase
+      "Eve's relatives match expected name->roles map"
       assertEveRelativesMatch
   ]
 
@@ -102,14 +102,10 @@ assertEveRelativesMatch = do
   case parseResult of
     Left e -> assertFailure ("rules test input must parse: " ++ errorMessage e)
     Right graph -> do
-      case getRelatives rules graph "Eve" of
-        Left e -> assertFailure ("getRelatives failed: " ++ e)
-        Right vertexToRoles -> do
-          -- Convert Map Vertex [String] to Map String [String] for comparison
-          let nameToRoles =
-                Map.fromListWith (++) [(name v, roles) | (v, roles) <- Map.toList vertexToRoles]
-          let norm = Map.map sort
-          norm nameToRoles @?= norm expectedMapEve
+      let eve = head $ filter ((== "Eve") . name) graph
+          pairs = getRelatives rules eve
+          nameToRoles = Map.fromList [(name v, role) | (v, role) <- pairs]
+      nameToRoles @?= expectedMapEve
 
 -- -----------------------------------------------------------------------------
 -- Test data
