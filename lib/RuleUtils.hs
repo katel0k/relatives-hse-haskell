@@ -13,7 +13,7 @@ module RuleUtils
   )
 where
 
-import Rules (getAny, getDual, getFemales, getIns, getMales, getOut)
+import Rules (getAny, getFemales, getIncoming, getMales, getOutgoing, getSpouse)
 
 -- | Get male vertices.
 m = getMales
@@ -25,13 +25,13 @@ f = getFemales
 a = getAny
 
 -- | Get incoming vertices.
-i = getIns
+i = getIncoming
 
 -- | Get outgoing vertices.
-o = getOut
+o = getOutgoing
 
--- | Get dual vertices.
-d = getDual
+-- | Get dual (spouse) vertices.
+d = getSpouse
 
 -- | Get any parent vertices.
 p = i a

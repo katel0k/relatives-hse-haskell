@@ -1,9 +1,11 @@
 import CommonRules (commonRules)
 import Data.Char (toLower)
+import Data.List (isInfixOf)
 import qualified Data.HashMap.Strict as HashMap
 import qualified Data.Map.Strict as Map
 import ParseInput
-import Rules (mergeRules, resolveRulesMap, toRuleExpr)
+import RuleUtils (a, f, i, m)
+import Rules (mergeRules, resolveRulesMap, (|:), (<==), RuleExpr)
 import Run
 import Test.Tasty
 import Test.Tasty.HUnit
@@ -89,14 +91,55 @@ rulesTests =
         Left e -> assertFailure ("expected Right: " ++ errorMessage e)
         Right resolved -> length resolved @?= HashMap.size commonRules,
     testCase "resolveRulesMap fails when a rule references a missing rule" $ do
-      let badMap = HashMap.fromList [("bad", toRuleExpr "nonexistent")]
+      let badMap = HashMap.fromList ["bad" |: "nonexistent"]
       case resolveRulesMap badMap of
         Left e -> do
           let msg = errorMessage e
-          assertBool "error message mentions failing rule name" ("notfound" `elem` words (map (\c -> if c == '\"' then ' ' else c) msg))
-          assertBool "error message mentions missing reference" ("notfound" `elem` words msg)
-        Right _ -> assertFailure "expected Left for missing rule reference"
+          assertBool "error message mentions missing reference" ("not found" `isInfixOf` msg)
+        Right _ -> assertFailure "expected Left for missing rule reference",
+    testCase "composite rule: прадедушка = прародитель <== i m (great-grandfather)"
+      assertCompositeRulePradedushka,
+    testCase "composite rule: прабабушка = прародитель <== i f (great-grandmother)"
+      assertCompositeRulePrababushka
   ]
+
+-- | Minimal rule map: прародитель = parent of parent, прадедушка = прародитель + male, прабабушка = прародитель + female.
+compositeRulesMap :: HashMap.HashMap String RuleExpr
+compositeRulesMap =
+  HashMap.fromList
+    [ "прародитель" |: i a <== i a,
+      "прадедушка" |: "прародитель" <== i m,
+      "прабабушка" |: "прародитель" <== i f
+    ]
+
+assertCompositeRulePradedushka :: Assertion
+assertCompositeRulePradedushka = do
+  case parseInput inputGraphFourGens of
+    Left e -> assertFailure ("parse failed: " ++ errorMessage e)
+    Right graph -> do
+      let eve = head $ filter ((== "Eve") . name) graph
+      case resolveRulesMap compositeRulesMap of
+        Left err -> assertFailure ("resolve failed: " ++ errorMessage err)
+        Right resolved -> do
+          let relatives = getRelatives resolved eve
+              roleOf n = lookup n [(name v, role) | (v, role) <- relatives]
+          assertBool "Eve's great-grandfather (GreatGrandpa) has role прадедушка" $
+            roleOf "GreatGrandpa" == Just "прадедушка"
+          assertBool "Eve's great-grandmother (GreatGrandma) has role прабабушка" $
+            roleOf "GreatGrandma" == Just "прабабушка"
+
+assertCompositeRulePrababushka :: Assertion
+assertCompositeRulePrababushka = do
+  case parseInput inputGraphFourGens of
+    Left e -> assertFailure ("parse failed: " ++ errorMessage e)
+    Right graph -> do
+      let eve = head $ filter ((== "Eve") . name) graph
+      case resolveRulesMap compositeRulesMap of
+        Left err -> assertFailure ("resolve failed: " ++ errorMessage err)
+        Right resolved -> do
+          let relatives = getRelatives resolved eve
+              roleOf n = lookup n [(name v, role) | (v, role) <- relatives]
+          roleOf "GreatGrandma" @?= Just "прабабушка"
 
 mergeRulesTests :: [TestTree]
 mergeRulesTests =
@@ -192,6 +235,30 @@ inputGraphEve =
       "Eve -> Dottie",
       "Abe -> Adam",
       "Abby -> Adam"
+    ]
+
+-- | Four generations: GreatGrandpa -> Abe -> Adam -> Eve, GreatGrandma -> Abby -> Adam -> Eve.
+-- From Eve, прадедушка = GreatGrandpa, прабабушка = GreatGrandma.
+inputGraphFourGens :: String
+inputGraphFourGens =
+  unlines
+    [ "Eve (Ж)",
+      "Adam (М)",
+      "Anna (Ж)",
+      "Abe (М)",
+      "Abby (Ж)",
+      "GreatGrandpa (М)",
+      "GreatGrandma (Ж)",
+      "",
+      "Adam <-> Anna",
+      "Abe <-> Abby",
+      "",
+      "GreatGrandpa -> Abe",
+      "GreatGrandma -> Abby",
+      "Abe -> Adam",
+      "Abby -> Adam",
+      "Adam -> Eve",
+      "Anna -> Eve"
     ]
 
 expectedMapEve :: Map.Map String String

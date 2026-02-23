@@ -12,12 +12,13 @@ module Rules
     getMales,
     getFemales,
     getAny,
-    getIns,
-    getOut,
-    getDual,
+    getIncoming,
+    getOutgoing,
+    getSpouse,
     (<==),
     ToRuleExpr (..),
     RulePart (..),
+    (|:),
   )
 where
 
@@ -61,6 +62,10 @@ infixr 5 <==
 (<==) :: (ToRuleExpr a, ToRuleExpr b) => a -> b -> RuleExpr
 a <== b = toRuleExpr a ++ toRuleExpr b
 
+infix 2 |:
+(|:) :: ToRuleExpr a => String -> a -> (String, RuleExpr)
+(|:) n e = (n, toRuleExpr e)
+
 makeRule :: RulesMap -> RuleExpr -> Either ErrorMsg Rule
 makeRule rules parts = do
   resolved <- traverse (resolvePart rules) parts
@@ -69,7 +74,7 @@ makeRule rules parts = do
     resolvePart _ (Right r) = Right r
     resolvePart rulesMap (Left name) =
       case HashMap.lookup name rulesMap of
-        Nothing -> Left $ ErrorMsg $ "Rule " ++ name ++ " notfound"
+        Nothing -> Left $ ErrorMsg $ "Rule " ++ name ++ " not found"
         Just expr -> makeRule rulesMap expr
 
 evaluateRule :: Rule -> Vertex -> [Vertex]
@@ -107,11 +112,11 @@ getFemales = filterByPredicate (\v -> gender v == Female)
 getAny :: [Vertex] -> State Visited [Vertex]
 getAny = filterByPredicate (const True)
 
-getIns :: ([Vertex] -> State Visited [Vertex]) -> [Vertex] -> State Visited [Vertex]
-getIns genderGetter vertices = genderGetter (unique $ concatMap incoming vertices)
+getIncoming :: ([Vertex] -> State Visited [Vertex]) -> [Vertex] -> State Visited [Vertex]
+getIncoming genderGetter vertices = genderGetter (unique $ concatMap incoming vertices)
 
-getOut :: ([Vertex] -> State Visited [Vertex]) -> [Vertex] -> State Visited [Vertex]
-getOut genderGetter vertices = genderGetter (unique $ concatMap outgoing vertices)
+getOutgoing :: ([Vertex] -> State Visited [Vertex]) -> [Vertex] -> State Visited [Vertex]
+getOutgoing genderGetter vertices = genderGetter (unique $ concatMap outgoing vertices)
 
-getDual :: ([Vertex] -> State Visited [Vertex]) -> [Vertex] -> State Visited [Vertex]
-getDual genderGetter vertices = genderGetter (unique $ concatMap dual vertices)
+getSpouse :: ([Vertex] -> State Visited [Vertex]) -> [Vertex] -> State Visited [Vertex]
+getSpouse genderGetter vertices = genderGetter (unique $ concatMap dual vertices)
