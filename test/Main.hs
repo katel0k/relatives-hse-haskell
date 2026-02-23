@@ -44,7 +44,7 @@ parsingTests =
           assertBool "Child present" ("Child" `elem` names)
         Left e -> assertFailure ("expected Right: " ++ errorMessage e),
     testCase "invalid gender line gives Left" $
-      case _parseGender ["Alice basically_any_gibberish"] of
+      case parseInput "Alice basically_any_gibberish\n\n\n" of
         Left _ -> pure ()
         Right _ -> assertFailure "expected Left for invalid gender"
   ]
@@ -134,16 +134,16 @@ rulesGraphEve =
       "Abby -> Adam"
     ]
 
-expectedMapEve :: Map.Map String [String]
+expectedMapEve :: Map.Map String String
 expectedMapEve =
   Map.fromList
-    [ ("Adam", ["отец"]),
-      ("Anna", ["мать"]),
-      ("Sonny", ["сын"]),
-      ("Dottie", ["дочь"]),
-      ("Ed", ["муж"]),
-      ("Abe", ["дедушка"]),
-      ("Abby", ["бабушка"]),
-      ("Brother", ["брат"]),
-      ("Sister", ["сестра"])
+    [ ("Adam", "отец"),
+      ("Anna", "мать"),
+      ("Sonny", "сын"),
+      ("Dottie", "дочь"),
+      ("Ed", "муж"),
+      ("Abe", "дедушка"),
+      ("Abby", "бабушка"),
+      ("Brother", "брат"),
+      ("Sister", "сестра")
     ]

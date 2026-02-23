@@ -49,7 +49,7 @@ main = do
     case getRelatives rules graph entryName of
       Left err -> putStrLn err >> exitFailure
       Right m -> return m
-  let outputLine v roles = forM_ roles $ \role -> putStrLn (name v ++ " " ++ role)
+  let outputLine v role = putStrLn (name v ++ " " ++ role)
       outputLineDebug v roles = forM_ roles $ \role -> print (name v, role)
   if debug
     then forM_ (Map.toList vertexToRoles) $ uncurry outputLineDebug

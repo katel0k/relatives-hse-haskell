@@ -27,7 +27,7 @@ filterByPredicate :: (Vertex -> Bool) -> [Vertex] -> State Visited [Vertex]
 filterByPredicate vertexPred vertices = do
   visited <- get
   modify (\s -> foldl (flip HS.insert) s vertices)
-  return $ unique $ filter (\v -> notElem v visited && vertexPred v) vertices
+  return $ unique $ filter (\v -> not (HS.member v visited) && vertexPred v) vertices
 
 getMales :: [Vertex] -> State Visited [Vertex]
 getMales = filterByPredicate (\v -> gender v == Male)

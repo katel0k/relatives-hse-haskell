@@ -8,16 +8,15 @@ getRelatives ::
   [(Rule, String)] ->
   Graph ->
   String ->
-  Either String (Map.Map Vertex [String])
+  Either String (Map.Map Vertex String)
 getRelatives ruleList graph entryName =
   case filter ((== entryName) . name) graph of
     [] -> Left ("Entry not found: " ++ entryName)
-    entry ->
-      let e = head entry
-          pairs =
+    (entry : _) ->
+      let pairs =
             [ (v, role)
               | (rule, role) <- ruleList,
-                v <- evaluateRule rule e
+                v <- evaluateRule rule entry
             ]
-          vertexToRoles = Map.fromListWith (++) (map (\(v, r) -> (v, [r])) pairs)
+          vertexToRoles = Map.fromList pairs
        in Right vertexToRoles
