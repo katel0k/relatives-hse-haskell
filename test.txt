@@ -1,13 +1,16 @@
-A M
-B F
-C M
-D M
-E F
-F M
-H F
-I F
-ExWife F
-CoParentChild M
+A (М)
+B (Ж)
+C (М)
+D (М)
+E (Ж)
+F (М)
+H (Ж)
+I (Ж)
+ExWife (Ж)
+CoParentChild (М)
+
+A <-> B
+C <-> I
 
 A -> C
 B -> C
@@ -20,6 +23,3 @@ I -> D
 I -> F
 C -> CoParentChild
 ExWife -> CoParentChild
-
-A <-> B
-C <-> I

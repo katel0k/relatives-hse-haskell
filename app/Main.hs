@@ -34,7 +34,9 @@ main = do
       debug = optDebug opts
   content <- withFile filename ReadMode $ \h -> do
     hSetEncoding h utf8
-    hGetContents h
+    c <- hGetContents h
+    -- forces full read
+    last (c ++ "\0") `seq` return c
   graph <-
     case parseInput content of
       Left err -> putStrLn (errorMessage err) >> exitFailure
