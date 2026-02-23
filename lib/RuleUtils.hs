@@ -9,35 +9,35 @@ module RuleUtils
     d,
     p,
     c,
-    s
+    s,
   )
 where
 
 import Rules (getAny, getDual, getFemales, getIns, getMales, getOut)
 
--- male
+-- | Get male vertices.
 m = getMales
 
--- female
+-- | Get female vertices.
 f = getFemales
 
--- any
+-- | Get any vertices.
 a = getAny
 
--- incoming
+-- | Get incoming vertices.
 i = getIns
 
--- outgoing
+-- | Get outgoing vertices.
 o = getOut
 
--- dual
+-- | Get dual vertices.
 d = getDual
 
--- parent
+-- | Get any parent vertices.
 p = i a
 
--- child
+-- | Get any child vertices.
 c = o a
 
--- spouse
+-- | Get any spouse vertices.
 s = d a
