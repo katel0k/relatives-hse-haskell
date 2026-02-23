@@ -13,8 +13,13 @@ data Vertex
     gender :: Gender
   }
 
+type Graph = [Vertex]
+
 instance Eq Vertex where
   (==) lhs rhs = name lhs == name rhs
+
+instance Ord Vertex where
+  compare a b = compare (name a) (name b)
 
 instance Hashable Vertex where
   hashWithSalt salt v = hashWithSalt salt (name v)

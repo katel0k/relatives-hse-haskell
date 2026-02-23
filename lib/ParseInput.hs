@@ -11,7 +11,7 @@ dropCommentLines = filter (not . isComment)
       ('#' : _) -> True
       _ -> False
 
-parseInput :: String -> Either ErrorMsg [Vertex]
+parseInput :: String -> Either ErrorMsg Graph
 parseInput input =
   let ls = dropCommentLines (lines input)
       (sec1, rest1) = break null ls

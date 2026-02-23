@@ -1,14 +1,24 @@
 {-# OPTIONS_GHC -Wno-missing-signatures #-}
 
-module Rules where
+module Rules
+  ( Rule,
+    evaluateRule,
+    rules,
+  )
+where
 
 import Control.Monad ((>=>))
-import Control.Monad.State (State, get, modify)
+import Control.Monad.State (State, evalState, get, modify)
 import qualified Data.HashSet as HS
 import Data.Hashable (Hashable)
 import Types
 
 type Visited = HS.HashSet Vertex
+
+newtype Rule = Rule ([Vertex] -> State Visited [Vertex])
+
+evaluateRule :: Rule -> Vertex -> [Vertex]
+evaluateRule (Rule f) v = evalState (f [v]) (HS.singleton v)
 
 unique :: (Hashable a) => [a] -> [a]
 unique = HS.toList . HS.fromList
@@ -49,40 +59,40 @@ o = getOut
 
 d = getDual
 
-rules :: [([Vertex] -> State Visited [Vertex], String)]
+rules :: [(Rule, String)]
 rules =
-  [ (i m, "отец"),
-    (i f, "мать"),
-    (o m, "сын"),
-    (o f, "дочь"),
-    (d m, "муж"),
-    (d f, "жена"),
-    (i a >=> i m, "дедушка"),
-    (i a >=> i f, "бабушка"),
-    (o a >=> o m, "внук"),
-    (o a >=> o f, "внучка"),
-    (i a >=> o m, "брат"),
-    (i a >=> o f, "сестра"),
-    (d a >=> i m, "свёкор"),
-    (d a >=> i f, "свекровь"),
-    (i a >=> i a >=> o m, "дядя"),
-    (i a >=> i a >=> o f, "тётя"),
-    (i a >=> i a >=> o a >=> o a, "двоюродный брат/сестра"),
-    (i a >=> i a >=> i m, "прадедушка"),
-    (i a >=> i a >=> i f, "прабабушка"),
-    (o a >=> o a >=> o m, "правнук"),
-    (o a >=> o a >=> o f, "правнучка"),
-    (i a >=> i a >=> i a >=> o m, "прадядя"),
-    (i a >=> i a >=> i a >=> o f, "пратётя"),
-    (i a >=> o a >=> o m, "племянник"),
-    (i a >=> o a >=> o f, "племянница"),
-    (d m >=> o a >=> i f, "бывшая жена мужа (надеюсь)"),
-    (d f >=> o a >=> i m, "бывший муж жены (надеюсь)"),
-    (d a >=> i a >=> o m >=> d f, "жена брата супруга"),
-    (d a >=> i a >=> o f >=> d m, "муж сестры супруга"),
-    (i a >=> o a >=> o a >=> o m, "внучатый племянник"),
-    (i a >=> o a >=> o a >=> o f, "внучатая племянница"),
-    (i a >=> i a >=> i a >=> o a >=> o a >=> o a, "троюродный брат/сестра"),
-    (i a >=> i a >=> i a >=> o a >=> o a, "двоюродный на поколение старше"),
-    (i a >=> i a >=> o a >=> o a >=> o a, "двоюродный на поколение младше")
+  [ (Rule (i m), "отец"),
+    (Rule (i f), "мать"),
+    (Rule (o m), "сын"),
+    (Rule (o f), "дочь"),
+    (Rule (d m), "муж"),
+    (Rule (d f), "жена"),
+    (Rule (i a >=> i m), "дедушка"),
+    (Rule (i a >=> i f), "бабушка"),
+    (Rule (o a >=> o m), "внук"),
+    (Rule (o a >=> o f), "внучка"),
+    (Rule (i a >=> o m), "брат"),
+    (Rule (i a >=> o f), "сестра"),
+    (Rule (d a >=> i m), "свёкор"),
+    (Rule (d a >=> i f), "свекровь"),
+    (Rule (i a >=> i a >=> o m), "дядя"),
+    (Rule (i a >=> i a >=> o f), "тётя"),
+    (Rule (i a >=> i a >=> o a >=> o a), "двоюродный брат/сестра"),
+    (Rule (i a >=> i a >=> i m), "прадедушка"),
+    (Rule (i a >=> i a >=> i f), "прабабушка"),
+    (Rule (o a >=> o a >=> o m), "правнук"),
+    (Rule (o a >=> o a >=> o f), "правнучка"),
+    (Rule (i a >=> i a >=> i a >=> o m), "прадядя"),
+    (Rule (i a >=> i a >=> i a >=> o f), "пратётя"),
+    (Rule (i a >=> o a >=> o m), "племянник"),
+    (Rule (i a >=> o a >=> o f), "племянница"),
+    (Rule (d m >=> o a >=> i f), "бывшая жена мужа (надеюсь)"),
+    (Rule (d f >=> o a >=> i m), "бывший муж жены (надеюсь)"),
+    (Rule (d a >=> i a >=> o m >=> d f), "жена брата супруга"),
+    (Rule (d a >=> i a >=> o f >=> d m), "муж сестры супруга"),
+    (Rule (i a >=> o a >=> o a >=> o m), "внучатый племянник"),
+    (Rule (i a >=> o a >=> o a >=> o f), "внучатая племянница"),
+    (Rule (i a >=> i a >=> i a >=> o a >=> o a >=> o a), "троюродный брат/сестра"),
+    (Rule (i a >=> i a >=> i a >=> o a >=> o a), "двоюродный на поколение старше"),
+    (Rule (i a >=> i a >=> o a >=> o a >=> o a), "двоюродный на поколение младше")
   ]

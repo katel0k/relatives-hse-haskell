@@ -1,10 +1,10 @@
 import Control.Monad (forM_)
-import Control.Monad.State (evalState)
-import qualified Data.HashSet as HS
+import qualified Data.Map.Strict as Map
 import GHC.IO.Encoding (utf8)
 import Options.Applicative
 import ParseInput
-import Rules
+import Run
+import Rules (rules)
 import System.Exit (exitFailure)
 import System.IO (Handle, IOMode (ReadMode), hGetContents, hSetEncoding, stdin, withFile)
 import Types
@@ -45,12 +45,12 @@ main = do
     case parseInput content of
       Left err -> putStrLn (errorMessage err) >> exitFailure
       Right g -> return g
-  let entry = filter (\v -> name v == entryName) graph
-      outputFunc = if debug then show else name
-  case entry of
-    [] -> putStrLn ("Entry not found: " ++ entryName) >> exitFailure
-    (e : _) ->
-      forM_ rules $ \(rule, role) -> do
-        let result = evalState (rule entry) (HS.singleton e)
-        forM_ result $ \v ->
-          putStrLn $ outputFunc v ++ " " ++ role
+  vertexToRoles <-
+    case getRelatives rules graph entryName of
+      Left err -> putStrLn err >> exitFailure
+      Right m -> return m
+  let outputLine v roles = forM_ roles $ \role -> putStrLn (name v ++ " " ++ role)
+      outputLineDebug v roles = forM_ roles $ \role -> print (name v, role)
+  if debug
+    then forM_ (Map.toList vertexToRoles) $ uncurry outputLineDebug
+    else forM_ (Map.toList vertexToRoles) $ uncurry outputLine
