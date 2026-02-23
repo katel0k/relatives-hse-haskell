@@ -1,9 +1,13 @@
-{-# OPTIONS_GHC -Wno-missing-signatures #-}
-
 module Rules
-  ( Rule,
+  ( Rule (..),
     evaluateRule,
-    rules,
+    mergeRules,
+    getMales,
+    getFemales,
+    getAny,
+    getIns,
+    getOut,
+    getDual,
   )
 where
 
@@ -19,6 +23,9 @@ newtype Rule = Rule ([Vertex] -> State Visited [Vertex])
 
 evaluateRule :: Rule -> Vertex -> [Vertex]
 evaluateRule (Rule f) v = evalState (f [v]) (HS.singleton v)
+
+mergeRules :: [(Rule, String)] -> [(Rule, String)] -> [(Rule, String)]
+mergeRules a b = a ++ b
 
 unique :: (Hashable a) => [a] -> [a]
 unique = HS.toList . HS.fromList
@@ -46,53 +53,3 @@ getOut genderGetter vertices = genderGetter (unique $ concatMap outgoing vertice
 
 getDual :: ([Vertex] -> State Visited [Vertex]) -> [Vertex] -> State Visited [Vertex]
 getDual genderGetter vertices = genderGetter (unique $ concatMap dual vertices)
-
-m = getMales
-
-f = getFemales
-
-a = getAny
-
-i = getIns
-
-o = getOut
-
-d = getDual
-
-rules :: [(Rule, String)]
-rules =
-  [ (Rule (i m), "отец"),
-    (Rule (i f), "мать"),
-    (Rule (o m), "сын"),
-    (Rule (o f), "дочь"),
-    (Rule (d m), "муж"),
-    (Rule (d f), "жена"),
-    (Rule (i a >=> i m), "дедушка"),
-    (Rule (i a >=> i f), "бабушка"),
-    (Rule (o a >=> o m), "внук"),
-    (Rule (o a >=> o f), "внучка"),
-    (Rule (i a >=> o m), "брат"),
-    (Rule (i a >=> o f), "сестра"),
-    (Rule (d a >=> i m), "свёкор"),
-    (Rule (d a >=> i f), "свекровь"),
-    (Rule (i a >=> i a >=> o m), "дядя"),
-    (Rule (i a >=> i a >=> o f), "тётя"),
-    (Rule (i a >=> i a >=> o a >=> o a), "двоюродный брат/сестра"),
-    (Rule (i a >=> i a >=> i m), "прадедушка"),
-    (Rule (i a >=> i a >=> i f), "прабабушка"),
-    (Rule (o a >=> o a >=> o m), "правнук"),
-    (Rule (o a >=> o a >=> o f), "правнучка"),
-    (Rule (i a >=> i a >=> i a >=> o m), "прадядя"),
-    (Rule (i a >=> i a >=> i a >=> o f), "пратётя"),
-    (Rule (i a >=> o a >=> o m), "племянник"),
-    (Rule (i a >=> o a >=> o f), "племянница"),
-    (Rule (d m >=> o a >=> i f), "бывшая жена мужа (надеюсь)"),
-    (Rule (d f >=> o a >=> i m), "бывший муж жены (надеюсь)"),
-    (Rule (d a >=> i a >=> o m >=> d f), "жена брата супруга"),
-    (Rule (d a >=> i a >=> o f >=> d m), "муж сестры супруга"),
-    (Rule (i a >=> o a >=> o a >=> o m), "внучатый племянник"),
-    (Rule (i a >=> o a >=> o a >=> o f), "внучатая племянница"),
-    (Rule (i a >=> i a >=> i a >=> o a >=> o a >=> o a), "троюродный брат/сестра"),
-    (Rule (i a >=> i a >=> i a >=> o a >=> o a), "двоюродный на поколение старше"),
-    (Rule (i a >=> i a >=> o a >=> o a >=> o a), "двоюродный на поколение младше")
-  ]

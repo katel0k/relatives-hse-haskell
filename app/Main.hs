@@ -2,7 +2,7 @@ import Control.Monad (forM_)
 import GHC.IO.Encoding (utf8)
 import Options.Applicative
 import ParseInput
-import Rules (rules)
+import RulesList (rules)
 import Run
 import System.Exit (exitFailure)
 import System.IO (Handle, IOMode (ReadMode), hGetContents, hSetEncoding, stdin, withFile)
