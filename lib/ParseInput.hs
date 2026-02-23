@@ -85,7 +85,7 @@ _buildGraph ::
   [(String, Gender)] -> -- names to genders mapping
   [(String, String)] -> -- parent ->  child edges
   [(String, String)] -> -- spouse <-> spouse edges
-  [Vertex]
+  Graph
 _buildGraph genderPairs parentChildPairs marriagePairs =
   let genderMap = Map.fromList genderPairs
       allNames = Map.keys genderMap
