@@ -5,7 +5,7 @@ where
 
 import Control.Monad ((>=>))
 import qualified Data.HashMap.Strict as HashMap
-import RuleUtils (a, d, f, i, m, o)
+import RuleUtils (a, d, f, i, m, o, p, c, s)
 import Rules (Rule (..), RulesMap)
 
 commonRules :: RulesMap
@@ -17,12 +17,12 @@ commonRules =
       ("дочь", Rule (o f)),
       ("муж", Rule (d m)),
       ("жена", Rule (d f)),
-      ("дедушка", Rule (i a >=> i m)),
-      ("бабушка", Rule (i a >=> i f)),
-      ("внук", Rule (o a >=> o m)),
-      ("внучка", Rule (o a >=> o f)),
-      ("брат", Rule (i a >=> o m)),
-      ("сестра", Rule (i a >=> o f)),
-      ("свёкор", Rule (d a >=> i m)),
-      ("свекровь", Rule (d a >=> i f))
+      ("дедушка", Rule (p >=> i m)),
+      ("бабушка", Rule (p >=> i f)),
+      ("внук", Rule (c >=> o m)),
+      ("внучка", Rule (c >=> o f)),
+      ("брат", Rule (p >=> o m)),
+      ("сестра", Rule (p >=> o f)),
+      ("свёкор", Rule (s >=> i m)),
+      ("свекровь", Rule (s >=> i f))
     ]
