@@ -1,3 +1,4 @@
+import Data.Char (toLower)
 import Data.List (sort)
 import qualified Data.Map.Strict as Map
 import ParseInput
@@ -46,18 +47,42 @@ parsingTests =
     testCase "invalid gender line gives Left" $
       case parseInput "Alice basically_any_gibberish\n\n\n" of
         Left _ -> pure ()
-        Right _ -> assertFailure "expected Left for invalid gender"
+        Right _ -> assertFailure "expected Left for invalid gender",
+    testCase "duplicate name in gender section gives Left" $
+      case parseInput "Alice (Ж)\nBob (М)\nAlice (Ж)\n\n\n" of
+        Left e -> do
+          let msg = errorMessage e
+          assertBool "error mentions duplicate" ("duplicate" `elem` words (map toLower msg))
+          assertBool "error mentions Alice" ("Alice" `elem` words msg)
+        Right _ -> assertFailure "expected Left for duplicate name",
+    testCase "duplicate parent-child edge gives Left" $
+      case parseInput "A (М)\nB (Ж)\n\nA <-> B\n\nA -> B\nA -> B\n" of
+        Left e -> do
+          let msg = errorMessage e
+          assertBool "error mentions duplicate" ("duplicate" `elem` words (map toLower msg))
+        Right _ -> assertFailure "expected Left for duplicate parent-child edge",
+    testCase "duplicate marriage edge (same pair) gives Left" $
+      case parseInput "X (М)\nY (Ж)\n\nX <-> Y\nX <-> Y\n\n\n" of
+        Left e -> do
+          let msg = errorMessage e
+          assertBool "error mentions duplicate" ("duplicate" `elem` words (map toLower msg))
+        Right _ -> assertFailure "expected Left for duplicate marriage edge",
+    testCase "duplicate marriage edge (reversed pair) gives Left" $
+      case parseInput "X (М)\nY (Ж)\n\nX <-> Y\nY <-> X\n\n\n" of
+        Left e -> do
+          let msg = errorMessage e
+          assertBool "error mentions duplicate" ("duplicate" `elem` words (map toLower msg))
+        Right _ -> assertFailure "expected Left for duplicate marriage edge (reversed)"
   ]
 
 rulesTests :: [TestTree]
 rulesTests =
   [ testCase "rules test input parses to expected graph" $
-      assertParsedRulesGraph rulesGraphEve expectedRulesGraphShape,
-    testCase "Eve's relatives match expected name->roles map" $
+      assertParsedRulesGraph inputGraphEve expectedRulesGraphShape,
+    testCase "Eve's relatives match expected name->roles map"
       assertEveRelativesMatch
   ]
 
--- Assert that rules test input parses and has the expected shape (vertex count, entry present).
 assertParsedRulesGraph :: String -> (Graph -> Assertion) -> Assertion
 assertParsedRulesGraph input assertShape =
   case parseInput input of
@@ -71,10 +96,9 @@ expectedRulesGraphShape graph = do
   assertBool "Eve in graph" ("Eve" `elem` names)
   assertBool "Adam in graph" ("Adam" `elem` names)
 
--- Parse rules test input (already asserted to parse in previous test), then getRelatives and compare to expected.
 assertEveRelativesMatch :: Assertion
 assertEveRelativesMatch = do
-  let parseResult = parseInput rulesGraphEve
+  let parseResult = parseInput inputGraphEve
   case parseResult of
     Left e -> assertFailure ("rules test input must parse: " ++ errorMessage e)
     Right graph -> do
@@ -104,8 +128,8 @@ fullExample =
       "Bob -> Child"
     ]
 
-rulesGraphEve :: String
-rulesGraphEve =
+inputGraphEve :: String
+inputGraphEve =
   unlines
     [ "Eve (Ж)",
       "Adam (М)",

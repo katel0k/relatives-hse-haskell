@@ -1,19 +1,13 @@
 module ParseInput where
 
 import Data.Char (isSpace)
+import Data.List (intercalate)
 import qualified Data.Map.Strict as Map
 import Types
 
-dropCommentLines :: [String] -> [String]
-dropCommentLines = filter (not . isComment)
-  where
-    isComment line = case dropWhile isSpace line of
-      ('#' : _) -> True
-      _ -> False
-
 parseInput :: String -> Either ErrorMsg Graph
 parseInput input =
-  let ls = dropCommentLines (lines input)
+  let ls = _dropCommentLines (lines input)
       (sec1, rest1) = break null ls
       rest1' = dropWhile null rest1
       (sec2, rest2) = break null rest1'
@@ -21,9 +15,45 @@ parseInput input =
       (sec3, _) = break null rest2'
    in do
         genderPairs <- _parseGender sec1
+        _checkDuplicateNames genderPairs
         marriagePairs <- _parseMarriage sec2
+        _checkDuplicateMarriageEdges marriagePairs
         parentChildPairs <- _parseParentChild sec3
+        _checkDuplicateParentChildEdges parentChildPairs
         return $ _buildGraph genderPairs parentChildPairs marriagePairs
+
+_dropCommentLines :: [String] -> [String]
+_dropCommentLines = filter (not . isComment)
+  where
+    isComment line = case dropWhile isSpace line of
+      ('#' : _) -> True
+      _ -> False
+
+_checkDuplicateNames :: [(String, Gender)] -> Either ErrorMsg ()
+_checkDuplicateNames genderPairs =
+  let names = map fst genderPairs
+      counts = Map.fromListWith (+) [(n, 1) | n <- names]
+      dups = [n | (n, c) <- Map.toList counts, c > 1]
+   in if null dups
+        then Right ()
+        else Left (ErrorMsg ("duplicate name(s): " ++ intercalate ", " dups))
+
+_checkDuplicateParentChildEdges :: [(String, String)] -> Either ErrorMsg ()
+_checkDuplicateParentChildEdges pairs =
+  let counts = Map.fromListWith (+) [(e, 1) | e <- pairs]
+      dups = [e | (e, c) <- Map.toList counts, c > 1]
+   in if null dups
+        then Right ()
+        else Left (ErrorMsg ("duplicate parent-child edge(s): " ++ intercalate "; " (map (\(p, c) -> p ++ " -> " ++ c) dups)))
+
+_checkDuplicateMarriageEdges :: [(String, String)] -> Either ErrorMsg ()
+_checkDuplicateMarriageEdges pairs =
+  let normalized = map (\(a, b) -> (min a b, max a b)) pairs
+      counts = Map.fromListWith (+) [(e, 1) | e <- normalized]
+      dups = [e | (e, c) <- Map.toList counts, c > 1]
+   in if null dups
+        then Right ()
+        else Left (ErrorMsg ("duplicate marriage edge(s): " ++ intercalate "; " (map (\(a, b) -> a ++ " <-> " ++ b) dups)))
 
 _parseGender :: [String] -> Either ErrorMsg [(String, Gender)]
 _parseGender = traverse parseLine . zip ([1 ..] :: [Int])
