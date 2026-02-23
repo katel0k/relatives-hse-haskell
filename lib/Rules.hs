@@ -1,20 +1,30 @@
+{-# LANGUAGE FlexibleInstances #-}
+
 module Rules
-  ( Rule (..),
+  ( Rule,
+    RuleExpr,
+    ResolvedRulesMap,
     RulesMap,
     evaluateRule,
     mergeRules,
+    makeRule,
+    resolveRulesMap,
     getMales,
     getFemales,
     getAny,
     getIns,
     getOut,
     getDual,
+    (<==),
+    ToRuleExpr (..),
+    RulePart (..),
   )
 where
 
 import Control.Monad ((>=>))
 import Control.Monad.State (State, evalState, get, modify)
 import Data.Foldable (Foldable (foldl'))
+import Data.Traversable (traverse)
 import qualified Data.HashMap.Strict as HashMap
 import qualified Data.HashSet as HS
 import Data.Hashable (Hashable)
@@ -22,15 +32,62 @@ import Types
 
 type Visited = HS.HashSet Vertex
 
-newtype Rule = Rule ([Vertex] -> State Visited [Vertex])
+type Rule = [Vertex] -> State Visited [Vertex]
 
-type RulesMap = HashMap.HashMap String Rule
+type RulePart = Either String Rule
+
+type RuleExpr = [RulePart]
+
+type RulesMap = HashMap.HashMap String RuleExpr
+
+type ResolvedRulesMap = [(Rule, String)]
+
+class ToRuleExpr a where
+  toRuleExpr :: a -> RuleExpr
+
+instance ToRuleExpr RulePart where
+  toRuleExpr p = [p]
+
+instance ToRuleExpr RuleExpr where
+  toRuleExpr = id
+
+instance ToRuleExpr Rule where
+  toRuleExpr r = [Right r]
+
+instance ToRuleExpr String where
+  toRuleExpr s = [Left s]
+
+infixr 5 <==
+(<==) :: (ToRuleExpr a, ToRuleExpr b) => a -> b -> RuleExpr
+a <== b = toRuleExpr a ++ toRuleExpr b
+
+makeRule :: RulesMap -> RuleExpr -> Either ErrorMsg Rule
+makeRule rules parts = do
+  resolved <- traverse (resolvePart rules) parts
+  return $ foldr (>=>) return resolved
+  where
+    resolvePart _ (Right r) = Right r
+    resolvePart rulesMap (Left name) =
+      case HashMap.lookup name rulesMap of
+        Nothing -> Left $ ErrorMsg $ "Rule " ++ name ++ " notfound"
+        Just expr -> makeRule rulesMap expr
 
 evaluateRule :: Rule -> Vertex -> [Vertex]
-evaluateRule (Rule f) v = evalState (f [v]) (HS.singleton v)
+evaluateRule f v = evalState (f [v]) (HS.singleton v)
 
 mergeRules :: RulesMap -> RulesMap -> RulesMap
 mergeRules a b = a `HashMap.union` b
+
+-- | Resolve all rule expressions in the map to concrete rules.
+resolveRulesMap :: RulesMap -> Either ErrorMsg ResolvedRulesMap
+resolveRulesMap rulesMap =
+  traverse
+    ( \(name, expr) ->
+        case makeRule rulesMap expr of
+          Left err -> Left $ ErrorMsg $ "Error while resolving rule " ++ name ++ ": " ++ errorMessage err
+          Right r -> Right (r, name)
+    )
+    (HashMap.toList rulesMap)
 
 unique :: (Hashable a) => [a] -> [a]
 unique = HS.toList . HS.fromList

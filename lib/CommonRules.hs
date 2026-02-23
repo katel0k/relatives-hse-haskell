@@ -3,26 +3,25 @@ module CommonRules
   )
 where
 
-import Control.Monad ((>=>))
 import qualified Data.HashMap.Strict as HashMap
 import RuleUtils (a, d, f, i, m, o, p, c, s)
-import Rules (Rule (..), RulesMap)
+import Rules (RulesMap, (<==), toRuleExpr)
 
 commonRules :: RulesMap
 commonRules =
   HashMap.fromList
-    [ ("отец", Rule (i m)),
-      ("мать", Rule (i f)),
-      ("сын", Rule (o m)),
-      ("дочь", Rule (o f)),
-      ("муж", Rule (d m)),
-      ("жена", Rule (d f)),
-      ("дедушка", Rule (p >=> i m)),
-      ("бабушка", Rule (p >=> i f)),
-      ("внук", Rule (c >=> o m)),
-      ("внучка", Rule (c >=> o f)),
-      ("брат", Rule (p >=> o m)),
-      ("сестра", Rule (p >=> o f)),
-      ("свёкор", Rule (s >=> i m)),
-      ("свекровь", Rule (s >=> i f))
+    [ ("отец", toRuleExpr (i m)),
+      ("мать", toRuleExpr (i f)),
+      ("сын", toRuleExpr (o m)),
+      ("дочь", toRuleExpr (o f)),
+      ("муж", toRuleExpr (d m)),
+      ("жена", toRuleExpr (d f)),
+      ("дедушка", p <== i m),
+      ("бабушка", p <== i f),
+      ("внук", c <== o m),
+      ("внучка", c <== o f),
+      ("брат", p <== o m),
+      ("сестра", p <== o f),
+      ("свёкор", s <== i m),
+      ("свекровь", s <== i f)
     ]

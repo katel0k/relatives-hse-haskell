@@ -4,35 +4,41 @@ module RulesList
 where
 
 import CommonRules (commonRules)
-import Control.Monad ((>=>))
 import qualified Data.HashMap.Strict as HashMap
 import RuleUtils (a, d, f, i, m, o, p, c, s)
-import Rules (Rule (..), RulesMap, mergeRules)
+import Rules (RulesMap, mergeRules, (<==))
+
+technicalRules :: RulesMap
+technicalRules =
+  HashMap.fromList
+    [ ("прародитель", i a <== i a)
+    ]
 
 deeperRules :: RulesMap
 deeperRules =
   HashMap.fromList
-    [ ("дядя", Rule (i a >=> i a >=> o m)),
-      ("тётя", Rule (i a >=> i a >=> o f)),
-      ("двоюродный брат/сестра", Rule (i a >=> i a >=> o a >=> o a)),
-      ("прадедушка", Rule (p >=> p >=> i m)),
-      ("прабабушка", Rule (p >=> p >=> i f)),
-      ("правнук", Rule (c >=> c >=> o m)),
-      ("правнучка", Rule (c >=> c >=> o f)),
-      ("прадядя", Rule (i a >=> i a >=> i a >=> o m)),
-      ("пратётя", Rule (i a >=> i a >=> i a >=> o f)),
-      ("племянник", Rule (i a >=> o a >=> o m)),
-      ("племянница", Rule (i a >=> o a >=> o f)),
-      ("бывшая жена мужа (надеюсь)", Rule (d m >=> o a >=> i f)),
-      ("бывший муж жены (надеюсь)", Rule (d f >=> o a >=> i m)),
-      ("жена брата супруга", Rule (s >=> i a >=> o m >=> d f)),
-      ("муж сестры супруга", Rule (s >=> i a >=> o f >=> d m)),
-      ("внучатый племянник", Rule (i a >=> o a >=> o a >=> o m)),
-      ("внучатая племянница", Rule (i a >=> o a >=> o a >=> o f)),
-      ("троюродный брат/сестра", Rule (i a >=> i a >=> i a >=> o a >=> o a >=> o a)),
-      ("двоюродный на поколение старше", Rule (i a >=> i a >=> i a >=> o a >=> o a)),
-      ("двоюродный на поколение младше", Rule (i a >=> i a >=> o a >=> o a >=> o a))
+    [ ("дядя", i a <== i a <== o m),
+      ("тётя", i a <== i a <== o f),
+      ("двоюродный брат/сестра", i a <== i a <== o a <== o a),
+      ("прадедушка", "прародитель" <== i m),
+      ("прабабушка", "прародитель" <== i f),
+      ("правнук", c <== c <== o m),
+      ("правнучка", c <== c <== o f),
+      ("прадядя", i a <== i a <== i a <== o m),
+      ("пратётя", i a <== i a <== i a <== o f),
+      ("племянник", i a <== o a <== o m),
+      ("племянница", i a <== o a <== o f),
+      ("бывшая жена мужа (надеюсь)", d m <== o a <== i f),
+      ("бывший муж жены (надеюсь)", d f <== o a <== i m),
+      ("жена брата супруга", s <== i a <== o m <== d f),
+      ("муж сестры супруга", s <== i a <== o f <== d m),
+      ("внучатый племянник", i a <== o a <== o a <== o m),
+      ("внучатая племянница", i a <== o a <== o a <== o f),
+      ("троюродный брат/сестра", i a <== i a <== i a <== o a <== o a <== o a),
+      ("двоюродный на поколение старше", i a <== i a <== i a <== o a <== o a),
+      ("двоюродный на поколение младше", i a <== i a <== o a <== o a <== o a)
     ]
 
+
 rules :: RulesMap
-rules = mergeRules commonRules deeperRules
+rules = mergeRules (mergeRules commonRules deeperRules) technicalRules

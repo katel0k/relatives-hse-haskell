@@ -3,7 +3,7 @@ import Data.Char (toLower)
 import qualified Data.HashMap.Strict as HashMap
 import qualified Data.Map.Strict as Map
 import ParseInput
-import Rules (mergeRules)
+import Rules (mergeRules, resolveRulesMap, toRuleExpr)
 import Run
 import Test.Tasty
 import Test.Tasty.HUnit
@@ -83,7 +83,19 @@ rulesTests =
       assertParsedRulesGraph inputGraphEve expectedRulesGraphShape,
     testCase
       "Eve's relatives match expected name->roles map (commonRules, at most two-deep)"
-      assertEveRelativesMatch
+      assertEveRelativesMatch,
+    testCase "resolveRulesMap succeeds for commonRules" $
+      case resolveRulesMap commonRules of
+        Left e -> assertFailure ("expected Right: " ++ errorMessage e)
+        Right resolved -> length resolved @?= HashMap.size commonRules,
+    testCase "resolveRulesMap fails when a rule references a missing rule" $ do
+      let badMap = HashMap.fromList [("bad", toRuleExpr "nonexistent")]
+      case resolveRulesMap badMap of
+        Left e -> do
+          let msg = errorMessage e
+          assertBool "error message mentions failing rule name" ("notfound" `elem` words (map (\c -> if c == '\"' then ' ' else c) msg))
+          assertBool "error message mentions missing reference" ("notfound" `elem` words msg)
+        Right _ -> assertFailure "expected Left for missing rule reference"
   ]
 
 mergeRulesTests :: [TestTree]
@@ -128,9 +140,12 @@ assertEveRelativesMatch = do
     Left e -> assertFailure ("rules test input must parse: " ++ errorMessage e)
     Right graph -> do
       let eve = head $ filter ((== "Eve") . name) graph
-          pairs = getRelatives commonRules eve
-          nameToRoles = Map.fromList [(name v, role) | (v, role) <- pairs]
-      nameToRoles @?= expectedMapEve
+      case resolveRulesMap commonRules of
+        Left e -> assertFailure ("rule resolution failed: " ++ errorMessage e)
+        Right resolved -> do
+          let pairs = getRelatives resolved eve
+              nameToRoles = Map.fromList [(name v, role) | (v, role) <- pairs]
+          nameToRoles @?= expectedMapEve
 
 -- -----------------------------------------------------------------------------
 -- Test data

@@ -2,6 +2,7 @@ import Control.Monad (forM_)
 import GHC.IO.Encoding (utf8)
 import Options.Applicative
 import ParseInput
+import Rules (resolveRulesMap)
 import RulesList (rules)
 import Run
 import System.Exit (exitFailure)
@@ -48,7 +49,11 @@ main = do
     case filter ((== entryName) . name) graph of
       [] -> putStrLn ("Entry not found: " ++ entryName) >> exitFailure
       (v : _) -> return v
-  let pairs = getRelatives rules entryVertex
+  resolvedRules <-
+    case resolveRulesMap rules of
+      Left err -> putStrLn (errorMessage err) >> exitFailure
+      Right r -> return r
+  let pairs = getRelatives resolvedRules entryVertex
       outputLine v role = putStrLn (name v ++ " " ++ role)
       outputLineDebug v role = print (name v, role)
   if debug
