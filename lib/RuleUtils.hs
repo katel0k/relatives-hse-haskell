@@ -45,14 +45,17 @@ c = o a
 -- | Get any spouse vertices.
 s = d a
 
--- | Technical rules used only for building other rules (e.g. "прародитель").
+-- | Technical rules used only for building other rules.
 -- Not exposed to the user; use technicalRuleNames to filter them out after resolution.
 technicalRules :: RulesMap
 technicalRules =
   HashMap.fromList
-    [ "прародитель" |: i a <== i a
+    [ "родитель" |: i a,
+      "прародитель" |: "родитель" <== "родитель",
+      "ребенок" |: o a,
+      "сиблинг" |: "родитель" <== "ребенок" -- sibling
     ]
 
 -- | Names of technical rules; exclude these when presenting resolved rules to the user.
 technicalRuleNames :: [String]
-technicalRuleNames = ["прародитель"]
+technicalRuleNames = ["прародитель", "родитель", "ребенок", "сиблинг"]
