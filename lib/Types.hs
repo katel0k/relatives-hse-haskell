@@ -1,6 +1,11 @@
+{-# LANGUAGE FlexibleInstances #-}
+
 module Types where
 
 import Data.Hashable (Hashable (..))
+import qualified Data.HashMap.Strict as HashMap
+import qualified Data.HashSet as HS
+import Control.Monad.State (State)
 
 data Gender = Male | Female | Any deriving (Eq, Show)
 
@@ -38,3 +43,30 @@ errorMessage (ErrorMsg s) = s
 
 instance Show ErrorMsg where
   show (ErrorMsg s) = s
+
+type Visited = HS.HashSet Vertex
+
+type Rule = [Vertex] -> State Visited [Vertex]
+
+type RulePart = Either String Rule
+
+type RuleExpr = [RulePart]
+
+type RulesMap = HashMap.HashMap String RuleExpr
+
+type ResolvedRulesMap = [(Rule, String)]
+
+class ToRuleExpr a where
+  toRuleExpr :: a -> RuleExpr
+
+instance ToRuleExpr RulePart where
+  toRuleExpr p = [p]
+
+instance ToRuleExpr RuleExpr where
+  toRuleExpr = id
+
+instance ToRuleExpr Rule where
+  toRuleExpr r = [Right r]
+
+instance ToRuleExpr String where
+  toRuleExpr s = [Left s]

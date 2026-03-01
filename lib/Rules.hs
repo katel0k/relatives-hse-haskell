@@ -1,4 +1,3 @@
-{-# LANGUAGE FlexibleInstances #-}
 
 module Rules
   ( Rule,
@@ -31,33 +30,6 @@ import qualified Data.HashMap.Strict as HashMap
 import qualified Data.HashSet as HS
 import Data.Hashable (Hashable)
 import Types
-
-type Visited = HS.HashSet Vertex
-
-type Rule = [Vertex] -> State Visited [Vertex]
-
-type RulePart = Either String Rule
-
-type RuleExpr = [RulePart]
-
-type RulesMap = HashMap.HashMap String RuleExpr
-
-type ResolvedRulesMap = [(Rule, String)]
-
-class ToRuleExpr a where
-  toRuleExpr :: a -> RuleExpr
-
-instance ToRuleExpr RulePart where
-  toRuleExpr p = [p]
-
-instance ToRuleExpr RuleExpr where
-  toRuleExpr = id
-
-instance ToRuleExpr Rule where
-  toRuleExpr r = [Right r]
-
-instance ToRuleExpr String where
-  toRuleExpr s = [Left s]
 
 infixr 5 <==
 (<==) :: (ToRuleExpr a, ToRuleExpr b) => a -> b -> RuleExpr
