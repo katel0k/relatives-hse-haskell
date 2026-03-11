@@ -1,5 +1,4 @@
 import Control.Monad (forM_)
-import GHC.IO.Encoding (utf8)
 import Options.Applicative
 import ParseInput
 import Rules (resolveRulesMap, withoutTechnicalRules)
@@ -7,8 +6,9 @@ import RulesList (rules)
 import RuleUtils (technicalRuleNames)
 import Run
 import System.Exit (exitFailure)
-import System.IO (Handle, IOMode (ReadMode), hGetContents, hSetEncoding, stdin, withFile)
 import Types (errorMessage, name)
+import GetInput (readFromFile, readUtf8Strict)
+import System.IO (stdin)
 
 data Options = Options
   { optEntry :: String,
@@ -23,12 +23,6 @@ options =
     <*> optional (argument str (metavar "FILE" <> help "Input graph file (omit to read from stdin)"))
     <*> switch (long "debug" <> help "Enable debug output")
 
-readUtf8Strict :: Handle -> IO String
-readUtf8Strict h = do
-  hSetEncoding h utf8
-  c <- hGetContents h
-  last (c ++ "\0") `seq` return c
-
 main :: IO ()
 main = do
   opts <-
@@ -41,19 +35,19 @@ main = do
   content <-
     case optFilename opts of
       Nothing -> readUtf8Strict stdin
-      Just filename -> withFile filename ReadMode readUtf8Strict
+      Just filename -> readFromFile filename
   graph <-
     case parseInput content of
       Left err -> putStrLn (errorMessage err) >> exitFailure
       Right g -> return g
-  entryVertex <-
-    case filter ((== entryName) . name) graph of
-      [] -> putStrLn ("Entry not found: " ++ entryName) >> exitFailure
-      (v : _) -> return v
   resolvedRules <-
     case resolveRulesMap rules of
       Left err -> putStrLn (errorMessage err) >> exitFailure
       Right r -> return r
+  entryVertex <-
+    case filter ((== entryName) . name) graph of
+      [] -> putStrLn ("Entry not found: " ++ entryName) >> exitFailure
+      (v : _) -> return v
   let resolvedForUser = withoutTechnicalRules technicalRuleNames resolvedRules
       pairs = getRelatives resolvedForUser entryVertex
       outputLine v role = putStrLn (name v ++ " " ++ role)

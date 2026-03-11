@@ -3,13 +3,12 @@ module CommonRules
   )
 where
 
-import qualified Data.HashMap.Strict as HashMap
 import RuleUtils (a, d, f, i, m, o, p, c, s)
-import Rules (RulesMap, (|:), (<==))
+import Rules (RulesMap, (|:), (<==), fromList)
 
 commonRules :: RulesMap
 commonRules =
-  HashMap.fromList
+  fromList
     [ "отец" |: i m,
       "мать" |: i f,
       "сын" |: o m,

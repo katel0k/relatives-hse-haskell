@@ -19,6 +19,7 @@ module Rules
     ToRuleExpr (..),
     RulePart (..),
     (|:),
+    fromList,
   )
 where
 
@@ -38,6 +39,9 @@ a <== b = toRuleExpr a ++ toRuleExpr b
 infix 2 |:
 (|:) :: ToRuleExpr a => String -> a -> (String, RuleExpr)
 (|:) n e = (n, toRuleExpr e)
+
+fromList :: [(String, RuleExpr)] -> RulesMap
+fromList = HashMap.fromList
 
 makeRule :: RulesMap -> RuleExpr -> Either ErrorMsg Rule
 makeRule rules parts = do

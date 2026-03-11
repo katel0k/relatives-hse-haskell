@@ -4,13 +4,12 @@ module RulesList
 where
 
 import CommonRules (commonRules)
-import qualified Data.HashMap.Strict as HashMap
 import RuleUtils (technicalRules, a, d, f, i, m, o, s)
-import Rules (RulesMap, (|:), mergeRules, (<==))
+import Rules (RulesMap, (|:), mergeRules, (<==), fromList)
 
 deeperRules :: RulesMap
 deeperRules =
-  HashMap.fromList
+  fromList
     [ "дядя" |: i a <== i a <== o m,
       "тётя" |: i a <== i a <== o f,
       "двоюродный брат/сестра" |: "родитель" <== "сиблинг" <== "ребенок",
