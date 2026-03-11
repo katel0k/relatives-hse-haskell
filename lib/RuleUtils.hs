@@ -16,7 +16,7 @@ module RuleUtils
 where
 
 import qualified Data.HashMap.Strict as HashMap
-import Rules (RulesMap, getAny, getFemales, getIncoming, getMales, getOutgoing, getSpouse, (|:), (<==))
+import Rules (RulesMap, getAny, getFemales, getIncoming, getMales, getOutgoing, getSpouse, (|:), (==>))
 
 -- | Get male vertices.
 m = getMales
@@ -51,9 +51,9 @@ technicalRules :: RulesMap
 technicalRules =
   HashMap.fromList
     [ "родитель" |: i a,
-      "прародитель" |: "родитель" <== "родитель",
+      "прародитель" |: "родитель" ==> "родитель",
       "ребенок" |: o a,
-      "сиблинг" |: "родитель" <== "ребенок" -- sibling
+      "сиблинг" |: "ребенок" ==> "родитель" -- sibling
     ]
 
 -- | Names of technical rules; exclude these when presenting resolved rules to the user.
