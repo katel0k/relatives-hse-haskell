@@ -16,6 +16,7 @@ module Rules
     getOutgoing,
     getSpouse,
     (<==),
+    (==>),
     ToRuleExpr (..),
     RulePart (..),
     (|:),
@@ -35,6 +36,10 @@ import Types
 infixr 5 <==
 (<==) :: (ToRuleExpr a, ToRuleExpr b) => a -> b -> RuleExpr
 a <== b = toRuleExpr a ++ toRuleExpr b
+
+infixl 5 ==>
+(==>) :: (ToRuleExpr a, ToRuleExpr b) => a -> b -> RuleExpr
+a ==> b = toRuleExpr b ++ toRuleExpr a
 
 infix 2 |:
 (|:) :: ToRuleExpr a => String -> a -> (String, RuleExpr)
