@@ -137,9 +137,9 @@ technicalRulesTests =
 compositeRulesMap :: HashMap.HashMap String RuleExpr
 compositeRulesMap =
   HashMap.fromList
-    [ "прародитель" |: i a <== i a,
-      "прадедушка" |: "прародитель" <== i m,
-      "прабабушка" |: "прародитель" <== i f
+    [  i a <== i a |: "прародитель",
+       "прародитель" <== i m |: "прадедушка",
+       "прародитель" <== i f |: "прабабушка"
     ]
 
 assertCompositeRulePradedushka :: Assertion

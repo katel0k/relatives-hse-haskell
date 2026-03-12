@@ -31,4 +31,4 @@ prettyPrint pairs = do
   forM_ pairs (\(v, role) -> putStrLn (name v ++ " " ++ role))
 
 addRule :: (ToRuleExpr a) => RulesMap -> String -> a -> RulesMap
-addRule rules ruleName ruleExpr = rules `mergeRules` fromList [ruleName |: ruleExpr]
+addRule rules ruleName ruleExpr = rules `mergeRules` fromList [ruleExpr |: ruleName]

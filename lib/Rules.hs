@@ -42,8 +42,8 @@ infixl 5 ==>
 a ==> b = toRuleExpr b ++ toRuleExpr a
 
 infix 2 |:
-(|:) :: ToRuleExpr a => String -> a -> (String, RuleExpr)
-(|:) n e = (n, toRuleExpr e)
+(|:) :: ToRuleExpr a => a -> String -> (String, RuleExpr)
+(|:) e n = (n, toRuleExpr e)
 
 fromList :: [(String, RuleExpr)] -> RulesMap
 fromList = HashMap.fromList

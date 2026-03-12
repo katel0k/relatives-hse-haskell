@@ -50,10 +50,10 @@ s = d a
 technicalRules :: RulesMap
 technicalRules =
   HashMap.fromList
-    [ "родитель" |: i a,
-      "прародитель" |: "родитель" ==> "родитель",
-      "ребенок" |: o a,
-      "сиблинг" |: "ребенок" ==> "родитель" -- sibling
+    [ i a |: "родитель",
+      "родитель" ==> "родитель" |: "прародитель",
+      o a |: "ребенок",
+      "ребенок" ==> "родитель" |: "сиблинг" -- sibling
     ]
 
 -- | Names of technical rules; exclude these when presenting resolved rules to the user.
